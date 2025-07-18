@@ -81,6 +81,16 @@
 				},
 				"publisherDisplayName": "Microsoft"
 			}
+		},
+		{
+			"name": "ponder-authentication",
+			"version": "0.0.1",
+			"repo": "https://github.com/your-org/ponder",
+			"metadata": {
+				"id": "ponder.ponder-authentication",
+				"publisherId": "ponder",
+				"publisherDisplayName": "Ponder"
+			}
 		}
 	]
 }
