@@ -127,14 +127,22 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
      * @param redirectUri 回调URI
      * @returns 授权响应数据
      */
-    private async getAuthorizationUrl(serverUrl: string, scopes: readonly string[], redirectUri: string) {
-        const response = await fetch(`${serverUrl}/api/vscode/authorize?redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes.join(' ')}`);
+    private async getAuthorizationUrl(serverUrl: string, scopes: readonly string[], redirectUri: string): Promise<{ authorization_url: string; state: string }> {
+        // 直接构建登录页面 URL
+        const url = new URL(`${serverUrl}/vscode/auth`);
+        url.searchParams.set('redirect_uri', redirectUri);
+        url.searchParams.set('scope', scopes.join(' '));
 
-        if (!response.ok) {
-            throw new Error(`获取授权URL失败: ${response.statusText}`);
-        }
+        const state = Date.now().toString(); // 生成状态参数
+        url.searchParams.set('state', state);
 
-        return await response.json();
+        this.logger.info(`构建授权URL: ${url.toString()}`);
+
+        // 直接返回登录页面 URL，不需要额外的 API 调用
+        return {
+            authorization_url: url.toString(),
+            state: state
+        };
     }
 
     /**
@@ -191,26 +199,56 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
      * @param redirectUri 回调URI
      * @returns 令牌数据
      */
-    private async exchangeCodeForToken(serverUrl: string, code: string, state: string, redirectUri: string) {
-        const response = await fetch(`${serverUrl}/api/vscode/callback`, {
+    private async exchangeCodeForToken(serverUrl: string, code: string, state: string, redirectUri: string): Promise<{ access_token: string; account: { id: string; label: string } }> {
+        const requestBody = {
+            code: code,
+            state: state,
+            redirect_uri: redirectUri
+        };
+
+        this.logger.info(`交换访问令牌请求: ${serverUrl}/vscode/auth/callback`);
+        this.logger.info(`请求体: ${JSON.stringify(requestBody)}`);
+
+        const response = await fetch(`${serverUrl}/vscode/auth/callback`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                code: code,
-                state: state,
-                redirect_uri: redirectUri
-            })
+            body: JSON.stringify(requestBody)
         });
 
-        const tokenData = await response.json();
+        this.logger.info(`令牌交换响应状态: ${response.status} ${response.statusText}`);
 
-        if (tokenData.error) {
-            throw new Error(tokenData.error_description || tokenData.error);
+        if (!response.ok) {
+            const errorText = await response.text();
+            this.logger.error(`令牌交换请求失败: ${response.status} ${response.statusText}, 响应内容: ${errorText}`);
+            throw new Error(`令牌交换失败: ${response.statusText}`);
         }
 
-        return tokenData;
+        const responseText = await response.text();
+        this.logger.info(`令牌交换响应内容: ${responseText.substring(0, 200)}...`);
+
+        if (!responseText.trim()) {
+            this.logger.error('令牌交换响应为空');
+            throw new Error('服务器返回空响应');
+        }
+
+        try {
+            const tokenData = JSON.parse(responseText) as any;
+
+            if (tokenData.error) {
+                this.logger.error(`令牌交换返回错误: ${tokenData.error} - ${tokenData.error_description}`);
+                throw new Error(tokenData.error_description || tokenData.error);
+            }
+
+            return tokenData as { access_token: string; account: { id: string; label: string } };
+        } catch (error) {
+            if (error instanceof SyntaxError) {
+                this.logger.error(`解析令牌交换响应JSON失败: ${error}, 原始响应: ${responseText}`);
+                throw new Error(`服务器响应格式错误: ${error.message}`);
+            }
+            throw error;
+        }
     }
 
     /**
@@ -249,6 +287,6 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
      * @returns 服务器URL
      */
     private getServerUrl(): string {
-        return vscode.workspace.getConfiguration('ponder-authentication').get<string>('serverUrl') || 'https://api.ponder.com';
+        return vscode.workspace.getConfiguration('ponder-authentication').get<string>('serverUrl') || 'http://localhost:3001';
     }
 }

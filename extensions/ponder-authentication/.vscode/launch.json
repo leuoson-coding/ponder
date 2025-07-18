@@ -10,8 +10,19 @@
             ],
             "outFiles": [
                 "${workspaceFolder}/out/**/*.js"
+            ]
+        },
+        {
+            "name": "Run Extension (with compile)",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}"
             ],
-            "preLaunchTask": "${workspaceFolder}:npm: watch"
+            "outFiles": [
+                "${workspaceFolder}/out/**/*.js"
+            ],
+            "preLaunchTask": "npm: compile"
         },
         {
             "name": "Extension Tests",
@@ -24,7 +35,7 @@
             "outFiles": [
                 "${workspaceFolder}/out/test/**/*.js"
             ],
-            "preLaunchTask": "${workspaceFolder}:npm: watch"
+            "preLaunchTask": "npm: compile"
         }
     ]
 }

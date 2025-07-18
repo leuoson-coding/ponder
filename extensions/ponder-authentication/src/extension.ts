@@ -49,13 +49,15 @@ export async function activate(context: vscode.ExtensionContext) {
     // 注册登出命令
     context.subscriptions.push(
         vscode.commands.registerCommand('ponder-authentication.logout', async () => {
-            const sessions = await vscode.authentication.getSessions('ponder-service');
-            if (sessions.length > 0) {
-                for (const session of sessions) {
-                    await authProvider.removeSession(session.id);
+            try {
+                const sessions = await vscode.authentication.getSession('ponder-service', [], { createIfNone: false, silent: true });
+                if (sessions) {
+                    await authProvider.removeSession(sessions.id);
+                    vscode.window.showInformationMessage('已退出登录');
+                } else {
+                    vscode.window.showInformationMessage('当前未登录');
                 }
-                vscode.window.showInformationMessage('已退出登录');
-            } else {
+            } catch (error) {
                 vscode.window.showInformationMessage('当前未登录');
             }
         })
@@ -71,8 +73,8 @@ export async function activate(context: vscode.ExtensionContext) {
                     return;
                 }
 
-                const serverUrl = vscode.workspace.getConfiguration('ponder-authentication').get<string>('serverUrl');
-                const response = await fetch(`${serverUrl}/api/vscode/user`, {
+                const serverUrl = vscode.workspace.getConfiguration('ponder-authentication').get<string>('serverUrl') || 'http://localhost:3001';
+                const response = await fetch(`${serverUrl}/vscode/auth/user`, {
                     headers: {
                         'Authorization': `Bearer ${session.accessToken}`
                     }
@@ -82,7 +84,7 @@ export async function activate(context: vscode.ExtensionContext) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                const userData = await response.json();
+                const userData = await response.json() as { username: string; email: string };
                 vscode.window.showInformationMessage(`当前用户: ${userData.username} (${userData.email})`);
             } catch (error: any) {
                 vscode.window.showErrorMessage(`获取用户信息失败: ${error.message}`);
@@ -102,12 +104,18 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.authentication.onDidChangeSessions(async (e) => {
             if (e.provider.id === 'ponder-service') {
-                const sessions = await vscode.authentication.getSessions('ponder-service');
-                if (sessions.length > 0) {
-                    statusBarItem.text = `$(account) ${sessions[0].account.label}`;
-                    statusBarItem.tooltip = '已登录到 Ponder 服务，点击查看用户信息';
-                    statusBarItem.command = 'ponder-authentication.getUserInfo';
-                } else {
+                try {
+                    const session = await vscode.authentication.getSession('ponder-service', [], { createIfNone: false, silent: true });
+                    if (session) {
+                        statusBarItem.text = `$(account) ${session.account.label}`;
+                        statusBarItem.tooltip = '已登录到 Ponder 服务，点击查看用户信息';
+                        statusBarItem.command = 'ponder-authentication.getUserInfo';
+                    } else {
+                        statusBarItem.text = '$(account) Ponder';
+                        statusBarItem.tooltip = '点击登录到 Ponder 服务';
+                        statusBarItem.command = 'ponder-authentication.login';
+                    }
+                } catch (error) {
                     statusBarItem.text = '$(account) Ponder';
                     statusBarItem.tooltip = '点击登录到 Ponder 服务';
                     statusBarItem.command = 'ponder-authentication.login';
@@ -125,7 +133,7 @@ export async function activate(context: vscode.ExtensionContext) {
  */
 export function deactivate() {
     Logger.info('Deactivating Ponder Authentication extension');
-    
+
     // 释放遥测报告器资源
     if (telemetryReporter) {
         telemetryReporter.dispose();
