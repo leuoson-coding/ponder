@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
 /**
- * Ponder Authentication Extension 测试脚本
- * 验证扩展的基本功能和配置
+ * Ponder Authentication Extension test script
+ * Verify basic functionality and configuration of the extension
  */
 
 const fs = require('fs');
 const path = require('path');
 
-console.log('🧪 开始测试 Ponder Authentication Extension...\n');
+console.log('🧪 Starting Ponder Authentication Extension test...\n');
 
-// 测试 1: 检查必要文件是否存在
-console.log('📁 检查文件结构...');
+// Test 1: Check if necessary files exist
+console.log('📁 Checking file structure...');
 const requiredFiles = [
     'package.json',
     'tsconfig.json',
@@ -28,77 +28,77 @@ requiredFiles.forEach(file => {
     if (fs.existsSync(file)) {
         console.log(`  ✅ ${file}`);
     } else {
-        console.log(`  ❌ ${file} - 文件不存在`);
+        console.log(`  ❌ ${file} - file does not exist`);
         allFilesExist = false;
     }
 });
 
-// 测试 2: 检查 package.json 配置
-console.log('\n📋 检查 package.json 配置...');
+// Test 2: Check package.json configuration
+console.log('\n📋 Checking package.json configuration...');
 try {
     const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-    
-    // 检查基本信息
-    console.log(`  ✅ 扩展名称: ${packageJson.name}`);
-    console.log(`  ✅ 版本: ${packageJson.version}`);
-    console.log(`  ✅ 显示名称: ${packageJson.displayName}`);
-    
-    // 检查认证提供者配置
+
+    // Check basic information
+    console.log(`  ✅ Extension name: ${packageJson.name}`);
+    console.log(`  ✅ Version: ${packageJson.version}`);
+    console.log(`  ✅ Display name: ${packageJson.displayName}`);
+
+    // Check authentication provider configuration
     if (packageJson.contributes && packageJson.contributes.authentication) {
-        console.log(`  ✅ 认证提供者已配置`);
+        console.log(`  ✅ Authentication provider configured`);
         const authProvider = packageJson.contributes.authentication[0];
         console.log(`    - ID: ${authProvider.id}`);
-        console.log(`    - 标签: ${authProvider.label}`);
+        console.log(`    - Label: ${authProvider.label}`);
     } else {
-        console.log(`  ❌ 认证提供者配置缺失`);
+        console.log(`  ❌ Authentication provider configuration missing`);
     }
-    
-    // 检查命令配置
+
+    // Check command configuration
     if (packageJson.contributes && packageJson.contributes.commands) {
-        console.log(`  ✅ 命令已配置 (${packageJson.contributes.commands.length} 个)`);
+        console.log(`  ✅ Commands configured (${packageJson.contributes.commands.length} commands)`);
         packageJson.contributes.commands.forEach(cmd => {
             console.log(`    - ${cmd.command}: ${cmd.title}`);
         });
     } else {
-        console.log(`  ❌ 命令配置缺失`);
+        console.log(`  ❌ Command configuration missing`);
     }
-    
-    // 检查图标配置
+
+    // Check icon configuration
     if (packageJson.icon) {
-        console.log(`  ✅ 图标路径: ${packageJson.icon}`);
+        console.log(`  ✅ Icon path: ${packageJson.icon}`);
         if (fs.existsSync(packageJson.icon)) {
-            console.log(`    - 图标文件存在`);
+            console.log(`    - Icon file exists`);
         } else {
-            console.log(`    - ❌ 图标文件不存在`);
+            console.log(`    - ❌ Icon file does not exist`);
         }
     } else {
-        console.log(`  ❌ 图标配置缺失`);
+        console.log(`  ❌ Icon configuration missing`);
     }
-    
+
 } catch (error) {
-    console.log(`  ❌ package.json 解析失败: ${error.message}`);
+    console.log(`  ❌ package.json parsing failed: ${error.message}`);
 }
 
-// 测试 3: 检查编译输出
-console.log('\n🔨 检查编译输出...');
+// Test 3: Check compilation output
+console.log('\n🔨 Checking compilation output...');
 if (fs.existsSync('out/extension.js')) {
     const stats = fs.statSync('out/extension.js');
-    console.log(`  ✅ extension.js 已生成 (${Math.round(stats.size / 1024)}KB)`);
+    console.log(`  ✅ extension.js generated (${Math.round(stats.size / 1024)}KB)`);
 } else {
-    console.log(`  ❌ extension.js 未生成`);
+    console.log(`  ❌ extension.js not generated`);
 }
 
-// 测试结果
-console.log('\n📊 测试结果:');
+// Test results
+console.log('\n📊 Test Results:');
 if (allFilesExist) {
-    console.log('🎉 所有必要文件都存在！');
-    console.log('\n🚀 下一步:');
-    console.log('  1. 在 VSCode 中打开此项目');
-    console.log('  2. 按 F5 启动调试会话');
-    console.log('  3. 在新的 VSCode 窗口中测试扩展功能');
-    console.log('  4. 使用命令面板搜索 "Ponder" 相关命令');
+    console.log('🎉 All necessary files exist!');
+    console.log('\n🚀 Next steps:');
+    console.log('  1. Open this project in VSCode');
+    console.log('  2. Press F5 to start debug session');
+    console.log('  3. Test extension functionality in the new VSCode window');
+    console.log('  4. Use command palette to search for "Ponder" related commands');
 } else {
-    console.log('❌ 部分文件缺失，请检查构建过程');
+    console.log('❌ Some files are missing, please check the build process');
 }
 
-console.log('\n✨ 测试完成！');
+console.log('\n✨ Test completed!');

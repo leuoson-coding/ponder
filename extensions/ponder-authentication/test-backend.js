@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 测试后端 API 连接
+ * Test backend API connection
  */
 
 const https = require('https');
@@ -9,9 +9,9 @@ const http = require('http');
 
 const SERVER_URL = 'http://localhost:3001';
 
-console.log('🔗 测试 Ponder 后端 API 连接...\n');
+console.log('🔗 Testing Ponder backend API connection...\n');
 
-// 测试函数
+// Test function
 async function testAPI(url, method = 'GET', data = null) {
     return new Promise((resolve, reject) => {
         const urlObj = new URL(url);
@@ -54,42 +54,42 @@ async function testAPI(url, method = 'GET', data = null) {
     });
 }
 
-// 测试各个 API 端点
+// Test various API endpoints
 async function runTests() {
-    console.log('📡 测试服务器连接...');
+    console.log('📡 Testing server connection...');
 
-    // 测试 1: 基础连接
+    // Test 1: Basic connection
     try {
         const response = await testAPI(`${SERVER_URL}/`);
-        console.log(`✅ 服务器连接成功 (状态码: ${response.statusCode})`);
+        console.log(`✅ Server connection successful (status code: ${response.statusCode})`);
     } catch (error) {
-        console.log(`❌ 服务器连接失败: ${error.message}`);
-        console.log('请确保后端服务器正在运行在 http://localhost:3000');
+        console.log(`❌ Server connection failed: ${error.message}`);
+        console.log('Please ensure backend server is running on http://localhost:3000');
         return;
     }
 
-    // 测试 2: 登录页面
-    console.log('\n🔐 测试登录页面...');
+    // Test 2: Login page
+    console.log('\n🔐 Testing login page...');
     try {
         const authUrl = `${SERVER_URL}/vscode/auth?redirect_uri=vscode://ponder.ponder-authentication/auth-complete&scope=user&state=test123`;
         const response = await testAPI(authUrl);
 
         if (response.statusCode === 200) {
-            console.log('✅ 登录页面响应正常');
+            console.log('✅ Login page response normal');
             if (response.body.includes('<html') || response.body.includes('<!DOCTYPE')) {
-                console.log('  - 返回HTML页面（正常）');
+                console.log('  - Returns HTML page (normal)');
             } else {
-                console.log('  - 响应内容可能不是HTML页面');
+                console.log('  - Response content may not be HTML page');
             }
         } else {
-            console.log(`⚠️ 登录页面状态码: ${response.statusCode}`);
+            console.log(`⚠️ Login page status code: ${response.statusCode}`);
         }
     } catch (error) {
-        console.log(`❌ 授权端点测试失败: ${error.message}`);
+        console.log(`❌ Authorization endpoint test failed: ${error.message}`);
     }
 
-    // 测试 3: 回调端点
-    console.log('\n🔄 测试回调端点...');
+    // Test 3: Callback endpoint
+    console.log('\n🔄 Testing callback endpoint...');
     try {
         const response = await testAPI(`${SERVER_URL}/vscode/auth/callback`, 'POST', {
             code: 'test_code',
@@ -97,36 +97,36 @@ async function runTests() {
             redirect_uri: 'vscode://ponder.ponder-authentication/auth-complete'
         });
 
-        console.log(`✅ 回调端点响应 (状态码: ${response.statusCode})`);
+        console.log(`✅ Callback endpoint response (status code: ${response.statusCode})`);
         if (response.statusCode === 400 || response.statusCode === 401) {
-            console.log('  - 这是正常的，因为我们使用了测试数据');
+            console.log('  - This is normal, as we used test data');
         }
     } catch (error) {
-        console.log(`❌ 回调端点测试失败: ${error.message}`);
+        console.log(`❌ Callback endpoint test failed: ${error.message}`);
     }
 
-    // 测试 4: 用户信息端点
-    console.log('\n👤 测试用户信息端点...');
+    // Test 4: User info endpoint
+    console.log('\n👤 Testing user info endpoint...');
     try {
         const response = await testAPI(`${SERVER_URL}/vscode/auth/user`, 'GET');
 
         if (response.statusCode === 401) {
-            console.log('✅ 用户信息端点正常 (需要认证，返回 401)');
+            console.log('✅ User info endpoint normal (requires authentication, returns 401)');
         } else {
-            console.log(`✅ 用户信息端点响应 (状态码: ${response.statusCode})`);
+            console.log(`✅ User info endpoint response (status code: ${response.statusCode})`);
         }
     } catch (error) {
-        console.log(`❌ 用户信息端点测试失败: ${error.message}`);
+        console.log(`❌ User info endpoint test failed: ${error.message}`);
     }
 
-    console.log('\n📋 测试总结:');
-    console.log('✅ 后端 API 基本可用');
-    console.log('🚀 现在可以在 VSCode 中测试完整的认证流程了！');
-    console.log('\n💡 使用方法:');
-    console.log('1. 在 VSCode 中打开 extensions/ponder-authentication');
-    console.log('2. 按 F5 启动调试会话');
-    console.log('3. 在新窗口中点击状态栏的 "Ponder" 按钮');
-    console.log('4. 或使用命令面板搜索 "Ponder: 登录到 Ponder 服务"');
+    console.log('\n📋 Test Summary:');
+    console.log('✅ Backend API is basically available');
+    console.log('🚀 Now you can test the complete authentication flow in VSCode!');
+    console.log('\n💡 Usage:');
+    console.log('1. Open extensions/ponder-authentication in VSCode');
+    console.log('2. Press F5 to start debug session');
+    console.log('3. Click the "Ponder" button in the status bar in the new window');
+    console.log('4. Or use command palette to search "Ponder: Login to Ponder Service"');
 }
 
 runTests().catch(console.error);
