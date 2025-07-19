@@ -5,6 +5,7 @@ import Logger from './logger';
 
 let authProvider: PonderAuthProvider;
 let telemetryReporter: PonderAuthenticationTelemetryReporter;
+let globalUriHandler: vscode.Disposable;
 
 /**
  * Extension activation function
@@ -21,6 +22,20 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Create authentication provider
     authProvider = new PonderAuthProvider(context, telemetryReporter, Logger);
+
+    // Register global URI handler for authentication callbacks
+    globalUriHandler = vscode.window.registerUriHandler({
+        handleUri: (uri: vscode.Uri) => {
+            Logger.info(`Received URI: ${uri.toString()}`);
+            if (uri.path === '/auth-complete') {
+                // Forward to auth provider if it's waiting for a callback
+                if (authProvider && (authProvider as any).handleAuthCallback) {
+                    (authProvider as any).handleAuthCallback(uri);
+                }
+            }
+        }
+    });
+    context.subscriptions.push(globalUriHandler);
 
     // Register authentication provider
     context.subscriptions.push(
@@ -74,7 +89,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 }
 
                 const serverUrl = vscode.workspace.getConfiguration('ponder-authentication').get<string>('serverUrl') || 'http://localhost:3001';
-                const response = await fetch(`${serverUrl}/vscode/auth/user`, {
+                const response = await fetch(`${serverUrl}/api/vscode/user`, {
                     headers: {
                         'Authorization': `Bearer ${session.accessToken}`
                     }

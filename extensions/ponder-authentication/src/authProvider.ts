@@ -13,6 +13,13 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
 	private _onDidChangeSessions = new vscode.EventEmitter<vscode.AuthenticationProviderAuthenticationSessionsChangeEvent>();
 	public readonly onDidChangeSessions = this._onDidChangeSessions.event;
 
+	// For handling global URI callbacks
+	private pendingAuthPromise: {
+		resolve: (code: string) => void;
+		reject: (error: Error) => void;
+		timeout: NodeJS.Timeout;
+	} | null = null;
+
 	constructor(
 		private readonly context: vscode.ExtensionContext,
 		private readonly telemetryReporter: PonderAuthenticationTelemetryReporter,
@@ -128,7 +135,7 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
 	 * @returns 授权响应数据
 	 */
 	private async getAuthorizationUrl(serverUrl: string, scopes: readonly string[], redirectUri: string): Promise<{ authorization_url: string; state: string }> {
-		// 直接构建登录页面 URL
+		// 构建简化的登录页面 URL，直接使用新的登录接口
 		const url = new URL(`${serverUrl}/vscode/auth`);
 		url.searchParams.set('redirect_uri', redirectUri);
 		url.searchParams.set('scope', scopes.join(' '));
@@ -138,11 +145,35 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
 
 		this.logger.info(`构建授权URL: ${url.toString()}`);
 
-		// 直接返回登录页面 URL，不需要额外的 API 调用
+		// 返回登录页面 URL，页面将使用 /api/vscode/login 接口直接获取授权码
 		return {
 			authorization_url: url.toString(),
 			state: state
 		};
+	}
+
+	/**
+	 * Handle authentication callback from global URI handler
+	 * @param uri The callback URI
+	 */
+	public handleAuthCallback(uri: vscode.Uri): void {
+		if (this.pendingAuthPromise && uri.path === '/auth-complete') {
+			const query = new URLSearchParams(uri.query);
+			const code = query.get('code');
+			const error = query.get('error');
+
+			clearTimeout(this.pendingAuthPromise.timeout);
+
+			if (error) {
+				this.pendingAuthPromise.reject(new Error(`授权失败: ${error}`));
+			} else if (code) {
+				this.pendingAuthPromise.resolve(code);
+			} else {
+				this.pendingAuthPromise.reject(new Error('未收到授权码'));
+			}
+
+			this.pendingAuthPromise = null;
+		}
 	}
 
 	/**
@@ -152,40 +183,26 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
 	private async waitForAuthorizationCode(): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const timeout = setTimeout(() => {
+				this.pendingAuthPromise = null;
 				reject(new Error('授权超时'));
 			}, 300000); // 5分钟超时
 
-			// 注册URI处理器来接收授权码
-			const disposable = vscode.window.registerUriHandler({
-				handleUri: (uri: vscode.Uri) => {
-					if (uri.path === '/auth-complete') {
-						const query = new URLSearchParams(uri.query);
-						const code = query.get('code');
-						const error = query.get('error');
-
-						clearTimeout(timeout);
-						disposable.dispose();
-
-						if (error) {
-							reject(new Error(`授权失败: ${error}`));
-						} else if (code) {
-							resolve(code);
-						} else {
-							reject(new Error('未收到授权码'));
-						}
-					}
-				}
-			});
+			// Store the promise for global URI handler
+			this.pendingAuthPromise = {
+				resolve,
+				reject,
+				timeout
+			};
 
 			// 显示等待提示
 			vscode.window.showInformationMessage(
 				'请在浏览器中完成登录授权...',
 				'取消'
 			).then(selection => {
-				if (selection === '取消') {
-					clearTimeout(timeout);
-					disposable.dispose();
-					reject(new Error('用户取消授权'));
+				if (selection === '取消' && this.pendingAuthPromise) {
+					clearTimeout(this.pendingAuthPromise.timeout);
+					this.pendingAuthPromise.reject(new Error('用户取消授权'));
+					this.pendingAuthPromise = null;
 				}
 			});
 		});
@@ -206,10 +223,10 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
 			redirect_uri: redirectUri
 		};
 
-		this.logger.info(`交换访问令牌请求: ${serverUrl}/vscode/auth/callback`);
+		this.logger.info(`交换访问令牌请求: ${serverUrl}/api/vscode/callback`);
 		this.logger.info(`请求体: ${JSON.stringify(requestBody)}`);
 
-		const response = await fetch(`${serverUrl}/vscode/auth/callback`, {
+		const response = await fetch(`${serverUrl}/api/vscode/callback`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -241,7 +258,14 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
 				throw new Error(tokenData.error_description || tokenData.error);
 			}
 
-			return tokenData as { access_token: string; account: { id: string; label: string } };
+			// 适配新的响应格式
+			return {
+				access_token: tokenData.access_token,
+				account: {
+					id: tokenData.account.id.toString(),
+					label: tokenData.account.label
+				}
+			};
 		} catch (error) {
 			if (error instanceof SyntaxError) {
 				this.logger.error(`解析令牌交换响应JSON失败: ${error}, 原始响应: ${responseText}`);
