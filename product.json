@@ -33,6 +33,16 @@
 	"nodejsRepository": "https://nodejs.org",
 	"urlProtocol": "ponder",
 	"webviewContentExternalBaseUrlTemplate": "https://{{uuid}}.ponder-cdn.net/insider/ef65ac1ba57f57f2a3961bfe94aa20481caca4c6/out/vs/workbench/contrib/webview/browser/pre/",
+	"defaultAccount": {
+		"authenticationProvider": {
+			"id": "ponder-service",
+			"enterpriseProviderId": "ponder-service",
+			"enterpriseProviderConfig": "ponder-authentication.useEnterpriseProvider",
+			"scopes": ["user"]
+		},
+		"tokenEntitlementUrl": "",
+		"chatEntitlementUrl": ""
+	},
 	"builtInExtensions": [
 		{
 			"name": "ms-vscode.js-debug-companion",
@@ -80,16 +90,6 @@
 					"flags": "verified"
 				},
 				"publisherDisplayName": "Microsoft"
-			}
-		},
-		{
-			"name": "ponder-authentication",
-			"version": "0.0.1",
-			"repo": "https://github.com/your-org/ponder",
-			"metadata": {
-				"id": "ponder.ponder-authentication",
-				"publisherId": "ponder",
-				"publisherDisplayName": "Ponder"
 			}
 		}
 	]
