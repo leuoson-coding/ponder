@@ -30,17 +30,17 @@ if [ "@@NAME@@" != "code-oss" ]; then
 
 	# Register apt repository
 	eval $(apt-config shell APT_SOURCE_PARTS Dir::Etc::sourceparts/d)
-	CODE_SOURCE_PART=${APT_SOURCE_PARTS}vscode.list
-	CODE_SOURCE_PART_DEB822=${APT_SOURCE_PARTS}vscode.sources
+	CODE_SOURCE_PART=${APT_SOURCE_PARTS}ponder.list
+	CODE_SOURCE_PART_DEB822=${APT_SOURCE_PARTS}ponder.sources
 
-	CODE_TRUSTED_PART=/usr/share/keyrings/microsoft.gpg
-	CODE_TRUSTED_PART_OLD="/etc/apt/trusted.gpg.d/microsoft.gpg"
+	CODE_TRUSTED_PART=/usr/share/keyrings/ponder.gpg
+	CODE_TRUSTED_PART_OLD="/etc/apt/trusted.gpg.d/ponder.gpg"
 
 	# RET seems to be true by default even after db_get is called on a first install.
 	RET='true'
 	if [ -e '/usr/share/debconf/confmodule' ]; then
 		. /usr/share/debconf/confmodule
-		db_get @@NAME@@/add-microsoft-repo || true
+		db_get @@NAME@@/add-ponder-repo || true
 	fi
 
 	# Determine whether to write the Microsoft repository source list

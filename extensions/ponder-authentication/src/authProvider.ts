@@ -136,7 +136,7 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
 	 */
 	private async getAuthorizationUrl(serverUrl: string, scopes: readonly string[], redirectUri: string): Promise<{ authorization_url: string; state: string }> {
 		// 构建简化的登录页面 URL，直接使用新的登录接口
-		const url = new URL(`${serverUrl}/vscode/auth`);
+		const url = new URL(`${serverUrl}/ponder/auth`);
 		url.searchParams.set('redirect_uri', redirectUri);
 		url.searchParams.set('scope', scopes.join(' '));
 
@@ -145,7 +145,7 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
 
 		this.logger.info(`构建授权URL: ${url.toString()}`);
 
-		// 返回登录页面 URL，页面将使用 /api/vscode/login 接口直接获取授权码
+		// 返回登录页面 URL，页面将使用 /api/ponder/login 接口直接获取授权码
 		return {
 			authorization_url: url.toString(),
 			state: state
@@ -223,10 +223,10 @@ export class PonderAuthProvider implements vscode.AuthenticationProvider {
 			redirect_uri: redirectUri
 		};
 
-		this.logger.info(`交换访问令牌请求: ${serverUrl}/api/vscode/callback`);
+		this.logger.info(`交换访问令牌请求: ${serverUrl}/api/ponder/callback`);
 		this.logger.info(`请求体: ${JSON.stringify(requestBody)}`);
 
-		const response = await fetch(`${serverUrl}/api/vscode/callback`, {
+		const response = await fetch(`${serverUrl}/api/ponder/callback`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

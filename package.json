@@ -1,9 +1,9 @@
 {
-  "name": "code-oss-dev",
+  "name": "ponder-ide",
   "version": "1.103.0",
   "distro": "a5bd023116e1e912804ee6d9f1c0b51c0369e8e4",
   "author": {
-    "name": "Microsoft Corporation"
+    "name": "Ponder Team"
   },
   "license": "MIT",
   "main": "./out/main.js",

@@ -1,18 +1,20 @@
 {
-	"name": "Code - OSS",
-	"short_name": "Code- OSS",
+	"name": "Ponder IDE",
+	"short_name": "Ponder",
 	"start_url": "/",
 	"lang": "en-US",
 	"display": "standalone",
 	"display_override": ["window-controls-overlay"],
+	"theme_color": "#0078d4",
+	"background_color": "#ffffff",
 	"icons": [
 		{
-			"src": "code-192.png",
+			"src": "ponder-192.png",
 			"type": "image/png",
 			"sizes": "192x192"
 		},
 		{
-			"src": "code-512.png",
+			"src": "ponder-512.png",
 			"type": "image/png",
 			"sizes": "512x512"
 		}

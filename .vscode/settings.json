@@ -81,7 +81,7 @@
 		".build/**": true,
 		"out/**": true,
 		"out-build/**": true,
-		"out-vscode/**": true,
+		"out-ponder/**": true,
 		"i18n/**": true,
 		"extensions/**/dist/**": true,
 		"extensions/**/out/**": true,

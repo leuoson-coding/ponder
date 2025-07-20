@@ -10,6 +10,7 @@ import { toErrorMessage } from '../../../base/common/errorMessage.js';
 import { Emitter, Event } from '../../../base/common/event.js';
 import { Disposable, DisposableStore, IDisposable, MutableDisposable, toDisposable } from '../../../base/common/lifecycle.js';
 import { FileAccess, Schemas } from '../../../base/common/network.js';
+import { join } from '../../../base/common/path.js';
 import { getMarks, mark } from '../../../base/common/performance.js';
 import { isBigSurOrNewer, isLinux, isMacintosh, isWindows } from '../../../base/common/platform.js';
 import { URI } from '../../../base/common/uri.js';
@@ -672,6 +673,14 @@ export class CodeWindow extends BaseWindow implements ICodeWindow {
 
 			this._id = this._win.id;
 			this.setWin(this._win, options);
+
+			// Force set window icon after creation (for Ponder branding)
+			if (isWindows) {
+				const iconPath = environmentMainService.isBuilt
+					? join(environmentMainService.appRoot, 'resources/win32/code.ico')
+					: join(environmentMainService.appRoot, 'resources/win32/code_150x150.png');
+				this._win.setIcon(iconPath);
+			}
 
 			// Apply some state after window creation
 			this.applyState(this.windowState, hasMultipleDisplays);

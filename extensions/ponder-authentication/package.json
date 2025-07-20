@@ -34,9 +34,9 @@
         "label": "Ponder Service",
         "id": "ponder-service",
         "authorizationServerGlobs": [
-          "https://*.ponder.com/vscode/*",
-          "http://localhost:3001/vscode/*",
-          "http://localhost:*/vscode/*"
+          "https://*.ponder.com/ponder/*",
+          "http://localhost:3001/ponder/*",
+          "http://localhost:*/ponder/*"
         ]
       }
     ],
