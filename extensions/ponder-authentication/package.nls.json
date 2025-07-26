@@ -1,0 +1,6 @@
+{
+  "displayName": "Ponder Authentication",
+  "description": "Ponder authentication provider",
+  "config.ponder.title": "Ponder",
+  "config.ponder.serverAddress.description": "The server address for Ponder authentication"
+}

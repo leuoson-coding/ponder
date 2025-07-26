@@ -1,6 +1,6 @@
 {
   "name": "npm",
-  "publisher": "vscode",
+  "publisher": "ponder",
   "displayName": "%displayName%",
   "description": "%description%",
   "version": "1.0.1",
