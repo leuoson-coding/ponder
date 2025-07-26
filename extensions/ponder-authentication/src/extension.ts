@@ -20,7 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
 		{ supportsMultipleAccounts: false }
 	));
 
-	// 注册测试命令
+	// Register test command
 	const testCommand = vscode.commands.registerCommand('ponder.testAuthentication', async () => {
 		try {
 			vscode.window.showInformationMessage('Starting Ponder authentication...');

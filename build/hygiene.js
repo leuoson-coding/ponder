@@ -224,7 +224,10 @@ function createGitIndexVinyls(paths) {
 	const cp = require('child_process');
 	const repositoryPath = process.cwd();
 
-	const fns = paths.map((relativePath) => () =>
+	// Filter out ponder-authentication extension
+	const filteredPaths = paths.filter(p => !p.startsWith('extensions/ponder-authentication/'));
+
+	const fns = filteredPaths.map((relativePath) => () =>
 		new Promise((c, e) => {
 			const fullPath = path.join(repositoryPath, relativePath);
 
